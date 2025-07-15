@@ -133,7 +133,7 @@ const CreateSchedule = () => {
 		const fetchData = async () => {
 			try {
 				const courseResponse = await axios.get(
-					`http://localhost:5000/api/courses/filter?yearLevel=${schedule.yearLevel}&areaOfStudy=${schedule.areaOfStudy}&department=${schedule.department}`
+					`http://localhost:5000/api/courses/filter?yearLevel=${schedule.yearLevel}&areaOfStudy=${schedule.areaOfStudy}&department=${schedule.department}&semester=${schedule.semester}`
 				);
 				console.log('API Response:', courseResponse.data);
 				setCourses(
@@ -147,7 +147,12 @@ const CreateSchedule = () => {
 			}
 		};
 		fetchData();
-	}, [schedule.yearLevel, schedule.department, schedule.areaOfStudy]);
+	}, [
+		schedule.yearLevel,
+		schedule.department,
+		schedule.areaOfStudy,
+		schedule.semester,
+	]);
 
 	console.log(courses);
 
@@ -321,7 +326,9 @@ const CreateSchedule = () => {
 							className="block w-full cursor-pointer rounded-md border border-slate-200 px-3 py-2 shadow-2xs disabled:bg-zinc-200"
 							disabled={!schedule.areaOfStudy}
 							required>
-							<option value="">Select Year Level</option>
+							<option value="" disabled>
+								Select Year Level
+							</option>
 							<option value="1">1st Year</option>
 							<option value="2">2nd Year</option>
 							<option value="3">3rd Year</option>
@@ -329,6 +336,26 @@ const CreateSchedule = () => {
 						</select>
 					</label>
 				</div>
+				<label className="flex w-full flex-col gap-1">
+					<h1 className="text-sm font-medium">Semester</h1>
+					{/* Course Dropdown */}
+					<select
+						name="semester"
+						value={schedule.semester}
+						onChange={handleChange}
+						className="block w-full cursor-pointer rounded-md border border-slate-200 px-3 py-2 shadow-2xs disabled:bg-zinc-200"
+						disabled={!schedule.yearLevel}
+						required>
+						<option value="" disabled>
+							Select Semester
+						</option>
+						<option value="1st Semester">1st Semester</option>
+						<option value="2nd Semester">2nd Semester</option>
+						<option value="Summer">Summer</option>
+						<option value="Januarian">Januarian</option>
+						<option value="Octoberian">Octoberian</option>
+					</select>
+				</label>
 				<label className="flex w-full flex-col gap-1">
 					<h1 className="text-sm font-medium">Course</h1>
 					{/* Course Dropdown */}
@@ -338,7 +365,9 @@ const CreateSchedule = () => {
 						onChange={handleChange}
 						required
 						className="block w-full rounded-md border border-slate-200 px-3 py-2 shadow-2xs">
-						<option value="">Select Course</option>
+						<option value="" disabled>
+							Select Subject
+						</option>
 						{courses.map((course) => (
 							<option key={course._id} value={course._id}>
 								{course.courseId} - {course.courseName}
@@ -346,19 +375,7 @@ const CreateSchedule = () => {
 						))}
 					</select>
 				</label>
-				<select
-					name="semester"
-					value={schedule.semester}
-					onChange={handleChange}
-					className="block w-full cursor-pointer rounded-md border border-slate-200 px-3 py-2 shadow-2xs disabled:bg-zinc-200"
-					required>
-					<option value="">Select Semester</option>
-					<option value="1st Semester">1st Semester</option>
-					<option value="2nd Semester">2nd Semester</option>
-					<option value="Summer">Summer</option>
-					<option value="Januarian">Januarian</option>
-					<option value="Octoberian">Octoberian</option>
-				</select>
+
 				<div>
 					<h1 className="mb-1 text-sm font-medium">Academic Year</h1>
 					<label className="flex w-full gap-2">
@@ -453,7 +470,9 @@ const CreateSchedule = () => {
 							required
 							className="block w-full rounded-md border border-slate-200 px-3 py-2 shadow-2xs"
 							disabled={schedule.day.length === 0 || !schedule.room}>
-							<option value="">Select Start Time</option>
+							<option value="" disabled>
+								Select Start Time
+							</option>
 							{availableSlots.map((slot) => (
 								<option key={slot.startTime} value={slot.startTime}>
 									{formatTime(slot.startTime)}
@@ -473,7 +492,9 @@ const CreateSchedule = () => {
 							required
 							className="block w-full rounded-md border border-slate-200 px-3 py-2 shadow-2xs"
 							disabled={!schedule.startTime}>
-							<option value="">Select End Time</option>
+							<option value="" disabled>
+								Select End Time
+							</option>
 							{availableSlots
 								.filter((slot) => slot.startTime > schedule.startTime)
 								.map((slot) => (

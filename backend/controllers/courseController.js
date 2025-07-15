@@ -63,12 +63,13 @@ export const createCourse = async (req, res) => {
 // @desc Get filtered courses
 export const getFilteredCourses = async (req, res) => {
     try {
-        const { yearLevel, areaOfStudy, department } = req.query;
+        const { yearLevel, areaOfStudy, department, semester } = req.query;
         const query = {};
 
         if (yearLevel) query.yearLevel = yearLevel;
         if (areaOfStudy) query.areaOfStudy = areaOfStudy;
         if (department) query.department = department;
+        if (semester) query.semester = semester;
 
         const courses = await Course.find(query);
 
