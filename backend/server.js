@@ -4,16 +4,16 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 // import authRoutes from "./src/backend/routes/authRoutes.js";
-// import scheduleRoutes from "./src/backend/routes/scheduleRoutes.js";
 // import courseRoutes from "./src/backend/routes/courseRoutes.js";
 // import userRoutes from "./src/backend/routes/userRoutes.js";
 // import studentRoutes from "./src/backend/routes/studentRoutes.js";
 // import gradeRoutes from "./src/backend/routes/gradeRoutes.js";
 // import setRoutes from "./src/backend/routes/setRoutes.js";
 // import searchRoutes from "./src/backend/routes/manageGradeRoutes.js";
-
+import scheduleRoutes from "./routes/scheduleRoutes.js";
 import roomRoutes from "./routes/roomRoutes.js"
-import courseRoutes from "./routes/courseRoute.js"
+import courseRoutes from "./routes/courseRoutes.js"
+import autoSchedRoutes from './routes/autoSchedRoutes.js'
 // dotenv.config();
 
 mongoose
@@ -27,9 +27,10 @@ app.use(express.json());
 
 app.use('/api/rooms', roomRoutes)
 app.use('/api/courses', courseRoutes)
+app.use("/api/schedules", scheduleRoutes);
+app.use("/api/auto-schedule", autoSchedRoutes);
 // app.use("/api/auth", authRoutes);
 
-// app.use("/api/schedules", scheduleRoutes);
 
 // app.use("/api/courses", courseRoutes);
 

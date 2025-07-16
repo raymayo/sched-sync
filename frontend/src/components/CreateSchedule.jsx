@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createSchedule } from '../services/scheduleService.js';
+import { fetchRooms } from '../services/roomService.js';
 import axios from 'axios';
 import useFormatTime from '../services/useFormatTime.js';
 
@@ -10,6 +11,8 @@ const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const allYear = ['2024', '2025', '2026', '2027', '2028', '2029', '2030'];
 
 const fullTimeSlots = [
+	{ startTime: 700, endTime: 730 },
+	{ startTime: 730, endTime: 800 },
 	{ startTime: 800, endTime: 830 },
 	{ startTime: 830, endTime: 900 },
 	{ startTime: 900, endTime: 930 },
@@ -46,7 +49,10 @@ const CreateSchedule = () => {
 	const [yearStart, setYearStart] = useState('');
 	const [yearEnd, setYearEnd] = useState('');
 	const [courses, setCourses] = useState([]);
+	const [rooms, setRooms] = useState([]);
 	const [existingSchedules, setExistingSchedules] = useState([]);
+
+	// console.log(rooms);
 
 	const [schedule, setSchedule] = useState({
 		course: '',
@@ -84,48 +90,26 @@ const CreateSchedule = () => {
 		getExistingSchedules();
 	}, [schedule.yearLevel, schedule.department, schedule.areaOfStudy]);
 
-	const getAvailableTimeSlots = (
-		fullTimeSlots,
-		existingSchedules,
-		targetRoom,
-		targetDays
-	) => {
-		return fullTimeSlots.filter((slot) => {
-			return !existingSchedules.some((existing) => {
-				const isSameRoom = existing.room === targetRoom; // ✅ Only check conflicts in the same room
-				const isSameDay = existing.day.some((d) => targetDays.includes(d)); // ✅ Only check conflicts on the requested days
-
-				const isOverlapping =
-					slot.startTime < existing.endTime &&
-					slot.endTime > existing.startTime; // ✅ Proper time conflict check
-
-				return isSameRoom && isSameDay && isOverlapping;
-			});
-		});
-	};
-
-	const availableSlots = getAvailableTimeSlots(
-		fullTimeSlots,
-		existingSchedules,
-		schedule.room,
-		schedule.day
-	);
-	console.log('AVAILABLESSSS', availableSlots);
-
-	const onScheduleAdded = async () => {
-		try {
-			// Fetch the updated schedules after adding a new one
-			const updatedScheduleResponse = await axios.get(
-				'http://localhost:5000/api/schedules'
-			);
-			setExistingSchedules(updatedScheduleResponse.data);
-
-			// Optionally, show a success message
-			alert('Schedule added successfully!');
-		} catch (error) {
-			console.error('Error refreshing schedule list:', error);
+	// Sync academicYear with schedule state
+	useEffect(() => {
+		if (academicYear !== schedule.academicYear) {
+			setSchedule((prev) => ({ ...prev, academicYear }));
 		}
-	};
+	}, [academicYear, schedule.academicYear]);
+
+	useEffect(() => {
+		const loadRooms = async () => {
+			try {
+				const res = await fetchRooms();
+				console.log('rooms:', res.data);
+				setRooms(res.data);
+			} catch (error) {
+				console.error(error);
+			}
+		};
+
+		loadRooms();
+	}, []);
 
 	useEffect(() => {
 		if (!schedule.yearLevel || !schedule.department || !schedule.areaOfStudy)
@@ -153,6 +137,50 @@ const CreateSchedule = () => {
 		schedule.areaOfStudy,
 		schedule.semester,
 	]);
+
+	const getAvailableTimeSlots = (
+		fullTimeSlots,
+		existingSchedules,
+		targetRoom,
+		targetDays
+	) => {
+		return fullTimeSlots.filter((slot) => {
+			return !existingSchedules.some((existing) => {
+				const isSameRoom = existing.room === targetRoom; // ✅ Only check conflicts in the same room
+				const isSameDay = targetDays.includes(existing.day);
+
+				const isOverlapping =
+					slot.startTime < existing.endTime &&
+					slot.endTime > existing.startTime; // ✅ Proper time conflict check
+
+				return isSameRoom && isSameDay && isOverlapping;
+			});
+		});
+	};
+
+	const availableSlots = getAvailableTimeSlots(
+		fullTimeSlots,
+		existingSchedules,
+		schedule.room,
+		schedule.day
+	);
+
+	console.log('AVAILABLESSSS', availableSlots);
+
+	const onScheduleAdded = async () => {
+		try {
+			// Fetch the updated schedules after adding a new one
+			const updatedScheduleResponse = await axios.get(
+				'http://localhost:5000/api/schedules'
+			);
+			setExistingSchedules(updatedScheduleResponse.data);
+
+			// Optionally, show a success message
+			alert('Schedule added successfully!');
+		} catch (error) {
+			console.error('Error refreshing schedule list:', error);
+		}
+	};
 
 	console.log(courses);
 
@@ -184,36 +212,45 @@ const CreateSchedule = () => {
 		e.preventDefault();
 
 		try {
-			// Fetch updated schedules before checking conflicts
+			// Fetch existing schedules to check for conflicts
 			const scheduleResponse = await axios.get(
 				'http://localhost:5000/api/schedules/raw'
 			);
 			const existingSchedules = scheduleResponse.data;
 
-			// Prevent submission if the selected slot is unavailable
-			const isUnavailable = existingSchedules.some(
-				(existing) =>
-					existing.day.some((day) => schedule.day.includes(day)) &&
-					existing.room === schedule.room &&
-					((schedule.startTime >= existing.startTime &&
-						schedule.startTime < existing.endTime) ||
-						(schedule.endTime > existing.startTime &&
-							schedule.endTime <= existing.endTime))
-			);
+			// Loop through each selected day
+			for (const selectedDay of schedule.day) {
+				const isUnavailable = existingSchedules.some(
+					(existing) =>
+						existing.day === selectedDay &&
+						existing.room === schedule.room &&
+						((schedule.startTime >= existing.startTime &&
+							schedule.startTime < existing.endTime) ||
+							(schedule.endTime > existing.startTime &&
+								schedule.endTime <= existing.endTime))
+				);
 
-			if (isUnavailable) {
-				alert('This time slot is unavailable. Please select another time.');
-				return;
+				if (isUnavailable) {
+					alert(
+						`Time slot unavailable on ${selectedDay}. Please select another time.`
+					);
+					return;
+				}
 			}
 
-			// Proceed with adding the schedule
-			await createSchedule(schedule);
+			// No conflicts found, create a schedule for each selected day
+			await Promise.all(
+				schedule.day.map(async (selectedDay) => {
+					const payload = { ...schedule, day: selectedDay };
+					await createSchedule(payload);
+				})
+			);
+
 			if (onScheduleAdded) onScheduleAdded();
 
 			// Reset form
-			setSchedule((prev) => ({
-				...prev,
-				day: [...[]], // Ensures state change is detected
+			setSchedule({
+				day: [],
 				course: '',
 				room: '',
 				department: '',
@@ -223,7 +260,7 @@ const CreateSchedule = () => {
 				areaOfStudy: '',
 				semester: '',
 				academicYear: '',
-			}));
+			});
 
 			// Refresh schedule list
 			const updatedScheduleResponse = await axios.get(
@@ -232,8 +269,10 @@ const CreateSchedule = () => {
 			setExistingSchedules(updatedScheduleResponse.data);
 		} catch (error) {
 			console.error('Error creating schedule:', error);
+			alert('Failed to create schedule. Please try again.');
 		}
-		console.log('Submitting schedule:', schedule);
+
+		console.log('Submitted schedules for:', schedule.day);
 	};
 
 	const handleYearChange = (e) => {
@@ -247,11 +286,6 @@ const CreateSchedule = () => {
 			setAcademicYear(`${yearStart}-${value}`);
 		}
 	};
-
-	// Sync academicYear with schedule state
-	useEffect(() => {
-		setSchedule((prev) => ({ ...prev, academicYear }));
-	}, [academicYear]);
 
 	return (
 		<form
@@ -447,16 +481,21 @@ const CreateSchedule = () => {
 				{/* Room Input */}
 				<label className="flex w-full flex-col gap-1">
 					<h1 className="text-sm font-medium">Room</h1>
-
-					<input
-						type="text"
+					<select
 						name="room"
-						placeholder="Room"
-						value={schedule.room}
 						onChange={handleChange}
-						required
+						value={schedule.room}
 						className="block w-full rounded-md border border-slate-200 px-3 py-2 shadow-2xs"
-					/>
+						required>
+						<option value="" disabled>
+							Select Room
+						</option>
+						{rooms.map((room) => (
+							<option key={room._id} value={room.name}>
+								{room.name}
+							</option>
+						))}
+					</select>
 				</label>
 
 				<div className="flex flex-row gap-4">
@@ -490,7 +529,7 @@ const CreateSchedule = () => {
 							value={schedule.endTime}
 							onChange={handleEndTimeChange}
 							required
-							className="block w-full rounded-md border border-slate-200 px-3 py-2 shadow-2xs"
+							className="block w-full rounded-md border border-slate-200 px-3 py-2 shadow-2xs disabled:bg-zinc-200"
 							disabled={!schedule.startTime}>
 							<option value="" disabled>
 								Select End Time

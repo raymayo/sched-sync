@@ -18,6 +18,7 @@ const courseSchema = new mongoose.Schema({
   courseUnit: { type: Number, required: true },
   areaOfStudy: { type: String, required: true }, // e.g., "Computer Science", "Engineering"
   department: { type: String },
+  isRequired: { type: Boolean },
   semester: {
     type: String,
     required: true,
