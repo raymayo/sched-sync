@@ -250,8 +250,8 @@ const AutoScheduler = () => {
 					<ul className="text-sm">
 						{generatedSchedule.map((item, i) => (
 							<li key={i}>
-								📚 {item.courseName} | 📍 {item.room} | {item.day} | ⏰{' '}
-								{item.startTime}–{item.endTime}
+								{item.courseName} | {item.room} | {item.day} | {item.startTime}–
+								{item.endTime}
 							</li>
 						))}
 					</ul>
