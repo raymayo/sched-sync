@@ -9,15 +9,15 @@ const roomSchema = new mongoose.Schema({
         trim: true,
         unique: true,
     },
-    department: {
-        type: String,
-        required: true,
-        trim: true,
-    },
-    capacity: {
-        type: Number,
-        required: true
-    },
+    // department: {
+    //     type: String,
+    //     required: true,
+    //     trim: true,
+    // },
+    // capacity: {
+    //     type: Number,
+    //     required: true
+    // },
     createdAt: {
         type: Date,
         default: Date.now,

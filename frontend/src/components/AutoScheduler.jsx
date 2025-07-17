@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import WeekCalendar from './WeekCalendar.jsx';
 
 const AutoScheduler = () => {
 	const [setInfo, setSetInfo] = useState({
@@ -42,8 +43,8 @@ const AutoScheduler = () => {
 
 				const enhanced = res.data.courses.map((c) => ({
 					...c,
-					sessionsPerWeek: 4,
-					hoursPerDay: 1.5,
+					sessionsPerWeek: 2,
+					hoursPerDay: 2,
 				}));
 
 				setCourses(enhanced);
@@ -90,6 +91,35 @@ const AutoScheduler = () => {
 			alert('Failed to generate schedule');
 		}
 	};
+
+	console.log(generatedSchedule);
+
+	const rawScheduleData = generatedSchedule;
+
+	const dayMap = {
+		Mon: 'Monday',
+		Tue: 'Tuesday',
+		Wed: 'Wednesday',
+		Thu: 'Thursday',
+		Fri: 'Friday',
+		Sat: 'Saturday',
+		Sun: 'Sunday',
+	};
+
+	const padTime = (num) => {
+		const h = String(Math.floor(num / 100)).padStart(2, '0');
+		const m = String(num % 100).padStart(2, '0');
+		return `${h}:${m}`;
+	};
+
+	const transformed = rawScheduleData
+		.filter((entry) => entry.day) // ignore entries with no day
+		.map((entry) => ({
+			subject: entry.courseName,
+			day: dayMap[entry.day],
+			startTime: padTime(entry.startTime),
+			endTime: padTime(entry.endTime),
+		}));
 
 	return (
 		<div className="max-w-xl mx-auto p-4 bg-white rounded shadow">
@@ -257,6 +287,8 @@ const AutoScheduler = () => {
 					</ul>
 				</div>
 			)}
+
+			<WeekCalendar initialSchedules={transformed} />
 		</div>
 	);
 };
