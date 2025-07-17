@@ -10,6 +10,7 @@ const AutoScheduler = () => {
 		yearLevel: '',
 		academicYear: '',
 		semester: '',
+		timePreference: '',
 	});
 	const [courses, setCourses] = useState([]);
 	const [rooms, setRooms] = useState([]);
@@ -39,12 +40,10 @@ const AutoScheduler = () => {
 					`http://localhost:5000/api/courses/filter?yearLevel=${setInfo.yearLevel}&areaOfStudy=${setInfo.areaOfStudy}&department=${setInfo.department}&semester=${setInfo.semester}`
 				);
 
-				console.log(res.data);
-
 				const enhanced = res.data.courses.map((c) => ({
 					...c,
 					sessionsPerWeek: 2,
-					hoursPerDay: 2,
+					hoursPerDay: 1.5,
 				}));
 
 				setCourses(enhanced);
@@ -86,43 +85,54 @@ const AutoScheduler = () => {
 				payload
 			);
 			setGeneratedSchedule(res.data.generatedSchedule);
+			console.log(generatedSchedule);
 		} catch (err) {
 			console.error('Scheduling error', err);
 			alert('Failed to generate schedule');
 		}
 	};
 
-	console.log(generatedSchedule);
-
-	const rawScheduleData = generatedSchedule;
-
-	const dayMap = {
-		Mon: 'Monday',
-		Tue: 'Tuesday',
-		Wed: 'Wednesday',
-		Thu: 'Thursday',
-		Fri: 'Friday',
-		Sat: 'Saturday',
-		Sun: 'Sunday',
+	const handleSave = async () => {
+		try {
+			await axios.post('http://localhost:5000/api/auto-schedule/save', {
+				schedules: generatedSchedule,
+			});
+			alert('Schedules saved!');
+		} catch (err) {
+			console.error('Save error', err);
+			alert('Failed to save schedules.');
+		}
 	};
 
-	const padTime = (num) => {
-		const h = String(Math.floor(num / 100)).padStart(2, '0');
-		const m = String(num % 100).padStart(2, '0');
-		return `${h}:${m}`;
-	};
+	// const rawScheduleData = generatedSchedule;
 
-	const transformed = rawScheduleData
-		.filter((entry) => entry.day) // ignore entries with no day
-		.map((entry) => ({
-			subject: entry.courseName,
-			day: dayMap[entry.day],
-			startTime: padTime(entry.startTime),
-			endTime: padTime(entry.endTime),
-		}));
+	// const dayMap = {
+	// 	Mon: 'Monday',
+	// 	Tue: 'Tuesday',
+	// 	Wed: 'Wednesday',
+	// 	Thu: 'Thursday',
+	// 	Fri: 'Friday',
+	// 	Sat: 'Saturday',
+	// 	Sun: 'Sunday',
+	// };
+
+	// const padTime = (num) => {
+	// 	const h = String(Math.floor(num / 100)).padStart(2, '0');
+	// 	const m = String(num % 100).padStart(2, '0');
+	// 	return `${h}:${m}`;
+	// };
+
+	// const transformed = rawScheduleData
+	// 	.filter((entry) => entry.day) // ignore entries with no day
+	// 	.map((entry) => ({
+	// 		subject: entry.courseName,
+	// 		day: dayMap[entry.day],
+	// 		startTime: padTime(entry.startTime),
+	// 		endTime: padTime(entry.endTime),
+	// 	}));
 
 	return (
-		<div className="max-w-xl mx-auto p-4 bg-white rounded shadow">
+		<div className="w-full mx-auto p-4 bg-white rounded shadow">
 			<h1 className="text-lg font-bold mb-2">Auto Schedule Generator</h1>
 
 			<input
@@ -219,12 +229,22 @@ const AutoScheduler = () => {
 					<option value="Januarian">Januarian</option>
 					<option value="Octoberian">Octoberian</option>
 				</select>
+				<select
+					name="timePreference"
+					onChange={handleChange}
+					value={setInfo.timePreference}>
+					<option value="">Select Time Preference</option>
+					<option value="morning">Morning (until 12PM or 2PM)</option>
+					<option value="afternoon">Afternoon (until 5PM or 7PM)</option>
+					<option value="evening">Evening (until 9PM)</option>
+				</select>
 			</label>
 
 			<input
 				name="academicYear"
 				placeholder="Academic Year (e.g. 2025-2026)"
 				className="w-full mb-4 border p-2"
+				value={setInfo.academicYear}
 				onChange={handleChange}
 			/>
 
@@ -288,7 +308,15 @@ const AutoScheduler = () => {
 				</div>
 			)}
 
-			<WeekCalendar initialSchedules={transformed} />
+			{generatedSchedule.length > 0 && (
+				<button
+					onClick={handleSave}
+					className="w-full bg-green-600 text-white py-2 rounded mb-4">
+					Save to Backend
+				</button>
+			)}
+
+			<WeekCalendar initialSchedules={generatedSchedule} />
 		</div>
 	);
 };
