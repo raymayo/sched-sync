@@ -326,18 +326,13 @@ const CreateSchedule = () => {
 			// if (onScheduleAdded) onScheduleAdded();
 
 			// Reset form
-			// setSchedule({
-			// 	// day: [],
-			// 	// course: '',
-			// 	// room: '',
-			// 	// startTime: '',
-			// 	// endTime: '',
-			// 	// department: '',
-			// 	// yearLevel: '',
-			// 	// areaOfStudy: '',
-			// 	// semester: '',
-			// 	// academicYear: '',
-			// });
+			setSchedule((prev) => ({
+				...prev,
+				day: [],
+				room: '',
+				startTime: '',
+				endTime: '',
+			}));
 
 			// Refresh schedule list
 			// const updatedScheduleResponse = await axios.get(
