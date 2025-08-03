@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
+import useFormatTime from '../services/useFormatTime.js';
 
 const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const SLOT_HEIGHT = 48; // Matches Tailwind's h-12 (12 * 4 = 48px)
+const SLOT_HEIGHT = 48;
 
-// Generate time slots from 07:00 to 21:30 in 30-min increments
 const generateTimeSlots = () => {
 	const slots = [];
 	for (let h = 7; h <= 21; h++) {
@@ -14,14 +14,12 @@ const generateTimeSlots = () => {
 };
 const times = generateTimeSlots();
 
-// Convert time (e.g., 800, 930) to index based on 07:00 AM
 const timeToIndex = (num) => {
 	const hour = Math.floor(num / 100);
 	const min = num % 100;
 	return (hour - 7) * 2 + (min >= 30 ? 1 : 0);
 };
 
-// Course colors
 const colorPalette = [
 	'bg-red-600/50',
 	'bg-green-600/50',
@@ -33,22 +31,30 @@ const colorPalette = [
 	'bg-orange-600/50',
 ];
 
-// Deterministic color assignment
-const getColorClass = (courseName) => {
+const getColorClass = (item) => {
+	if (!item?.course?.courseName) return 'bg-gray-200';
+
 	let hash = 0;
-	for (let i = 0; i < courseName.length; i++) {
-		hash = courseName.charCodeAt(i) + ((hash << 5) - hash);
+	for (let i = 0; i < item.course.courseName.length; i++) {
+		hash = item.course.courseName.charCodeAt(i) + ((hash << 5) - hash);
 	}
 	const index = Math.abs(hash) % colorPalette.length;
 	return colorPalette[index];
 };
 
-const WeekCalendar = ({ initialSchedules = [] }) => {
+const WeekCalendar = ({ initialSchedules = [], availableCourses = [] }) => {
+	const { formatTime } = useFormatTime();
 	const [schedules, setSchedules] = useState([]);
+	const [courses, setCourses] = useState([]);
 
 	useEffect(() => {
+		setCourses(availableCourses);
 		setSchedules(initialSchedules);
+		// console.log('⏰ Loaded schedules:', initialSchedules);
+		console.log('📚 Available courses:', availableCourses);
 	}, [initialSchedules]);
+
+	// const selectedCourse = courses.find((c) => c._id === schedule.course);
 
 	return (
 		<div className="p-4 overflow-auto">
@@ -58,7 +64,7 @@ const WeekCalendar = ({ initialSchedules = [] }) => {
 					<h1 className="p-1 text-center font-semibold">TIME</h1>
 					{times.map((t, idx) => (
 						<div key={idx} className="h-12 border-t px-1 box-border">
-							{t}
+							{formatTime(t)}
 						</div>
 					))}
 				</div>
@@ -80,16 +86,19 @@ const WeekCalendar = ({ initialSchedules = [] }) => {
 										(timeToIndex(s.endTime) - timeToIndex(s.startTime)) *
 										SLOT_HEIGHT;
 									const color = getColorClass(s.courseName);
-
+									const course = courses.find((c) => c._id === s.course);
+									console.log('HAHA', course);
+									console.log('HAHA', s.course);
+									console.log('HAHA', courses);
 									return (
 										<div
 											key={i}
 											className={`absolute left-1 right-1 ${color} text-black p-1 border text-xs rounded shadow`}
 											style={{ top, height }}>
-											<div className="font-medium">{s.courseName}</div>
+											<div className="font-medium">{course.courseName}</div>
 											<div>{s.room}</div>
 											<div>
-												{s.startTime} - {s.endTime}
+												{formatTime(s.startTime)} - {formatTime(s.endTime)}
 											</div>
 										</div>
 									);

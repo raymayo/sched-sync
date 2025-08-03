@@ -7,8 +7,8 @@ function App() {
 	return (
 		<div>
 			{/* <h1>hello</h1> */}
-			{/* <CreateSchedule /> */}
-			<AutoScheduler />
+			<CreateSchedule />
+			{/* <AutoScheduler /> */}
 			{/* <CreateCourse /> */}
 			{/* <Rooms /> */}
 		</div>
